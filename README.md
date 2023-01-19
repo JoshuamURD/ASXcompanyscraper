@@ -1,9 +1,9 @@
 # ASXcompanyscraper
-A python script that inputs a list of ASX codes, scrapes Yahoo Finance and outputs a spreadsheet with relevant information
+A python script that inputs a list of ASX codes, scrapes Yahoo Finance and outputs a spreadsheet with relevant information. This would be useful for a person who was attmepting to do initial due diligence on a handful of companies.  
 
 # Dependencies
 - Requests
-- Beautifulsoup
+- Beautifulsoup4
 
 # Work to be done
 - [ ] Code needs cleaning up. Certain functions currently do more than one thing.
