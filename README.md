@@ -3,6 +3,7 @@ A python script that inputs a list of ASX codes, scrapes Yahoo Finance and outpu
 
 # Dependencies
 - Requests
+- Beautifulsoup
 
 # Work to be done
 - [ ] Code needs cleaning up. Certain functions currently do more than one thing.
