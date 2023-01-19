@@ -65,6 +65,18 @@ class Scraper():
 		results = self.requestPage(ASX, 'p')
 		formatted = self.formattingCommas(results[3].get_text())
 		return formatted
+	
+	def hasASXpage(self, results): #checks to see if the supplied ASX code has a Yahoo Finance page
+		if not results:
+			print("No information found for: {0}".format(ASX))
+			return False
+		#test to see if ASX code is available
+		if not any(word in results[counter].get_text() for word in self.titles):
+			print("Checking if {0} is in {1}".format(results[counter].get_text(), self.titles))
+			print("Tried to pull data for {0}, instead got:\n".format(ASX))
+			print(results[counter].get_text())
+			return False
+		return
 
 	def returnSearchASX(self, ASX): #Gets ASX director's and puts them in the CSV NOTE: consider seperating the consolidating of information and putting it into CSV file.
 		counter = 0 #counter for putting the results in the CSV document
