@@ -13,3 +13,8 @@ A python script that inputs a list of ASX codes, scrapes Yahoo Finance and outpu
 - [ ] Consider making certain outputs optional like the market cap, board members, etc.
 - [ ] Allow user to choose an output directory.
 - [ ] Allow the user to choose the list location.
+- [ ] Create a tester program that makes sure each module is working correctly.
+
+# Issues
+- Currently has terrible exception handling
+- Currently has no explanation if a company page cannot be found
