@@ -18,7 +18,7 @@ class Scraper():
         # Formats the URL to return the profile \
         # of a company's Yahoo Finance pageformatted
         formatted = 'https://au.finance.yahoo.com/quote/' +\
-                asxcode + '/profile?p=' + asxcode
+                asxcode + '.AX/profile?p=' + asxcode + ".AX"
         return str(formatted)
 
     def formattingCommas(self, text):
@@ -62,15 +62,21 @@ class Scraper():
         results = self.requestPage(ASX, 'span')
         for i in range(len(results)):
             if value in results[i].get_text():
-                print(results[i+1].get_text())
+                print("Found {0}'s value for {1}".format(ASX, value))
                 return results[i+1].get_text()
 
     def findCompanyAddress(self, ASX):
         # Finds and returns the company's address.
         # Required a different method than findASXValue function
-        counter = 0  # is counter being used?
+        print("Finding {0}'s address".format(ASX))
         results = self.requestPage(ASX, 'p')
-        ausindex = results[1].get_text().find("Australia") + 9
+        ausindex = results[1].get_text().find("Australia")
+
+        #Checks to see if foudn "Australia" in ausindex
+        if ausindex == -1:
+            print("Not located in Australia")
+            return "N/A"
+
         try:
             formattedResults = results[1].get_text()
         except IndexError:
@@ -80,6 +86,8 @@ class Scraper():
         if len(formattedResults) == 9:
             print("only know that {} is in Australia".format(ASX))
             return formattedResults[:ausindex]
+
+        # if the function found a correct Australian address, returns the address
         return formattedResults[:ausindex]
 
     def findCompanyDesc(self, ASX):
@@ -88,18 +96,26 @@ class Scraper():
         formatted = self.formattingCommas(results[3].get_text())
         return formatted
 
-    def hasASXpage(self, results):
+    # Function for writing which ASX codes had an error scraping
+    def writeErrors(self, ASX):
+        with open('Errors.txt', 'a', encoding='utf-8') as fd:
+            fd.write("Error finding information for: {}\n".format(ASX))
+
+    #function not implemented yet. when implemented, take out of returnSearchASX()
+    def hasASXpage(self, results, counter, ASX):
         # checks to see if the supplied ASX code has a Yahoo Finance page
         if not results:
             print("No information found for: {0}".format(ASX))
+            self.writeErrors(ASX)
             return False
         # test to see if ASX code is available
         if not any(word in results[counter].get_text() for word in self.titles):
             print("Checking if {0} is in {1}".format(results[counter].get_text(), self.titles))
             print("Tried to pull data for {0}, instead got:\n".format(ASX))
             print(results[counter].get_text())
+            self.writeErrors(ASX)
             return False
-        return
+        return True
 
     def returnSearchASX(self, ASX):
         # Gets ASX director's and puts them in the CSV
@@ -109,32 +125,21 @@ class Scraper():
         # creates a result page to check
         results = self.requestPage(ASX, 'td')
 
-        # Sometimes website has no data despite having the company.
-        # Checks to see if company's page is empty.
-        # Consider putting this in seperate function.
-        if not results:
-            print("No information found for: {0}".format(ASX))
-            return
-        # test to see if ASX code is available
-        if not any(word in results[counter].get_text() for word in self.titles):
-            print("Checking if {0} is in {1}".format(results[counter].get_text(), self.titles))
-            print("Tried to pull data for {0}, instead got:\n".format(ASX))
-            print(results[counter].get_text())
+        if not self.hasASXpage(results, counter, ASX):
             return
 
-        ########################################################
-
-        name = self.requestPage(ASX, 'h1')[0].get_text()
+        companyName = self.requestPage(ASX, 'h1')[0].get_text()
         sector = self.findASXValue(ASX, "Sector(s)")
         industry = self.findASXValue(ASX, "Industry")
 
         with open('Board Directors.csv', 'a', encoding="utf-8") as fd:
             fd.write("\n")
             for i in range(len(results)):
+               
                 try:
                     fd.write(
                             "{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}\n".format(
-                                name,
+                                companyName,
                                 ASX,
                                 self.formattingCommas(results[counter].get_text()),
                                 self.formattingCommas(results[counter+1].get_text()),
@@ -147,8 +152,10 @@ class Scraper():
                                 self.findCompanyDesc(ASX),
                                 self.findCompanyAddress(ASX)
                                 ))
+                    print("Board member {0} is being written.\n{1} out of {2}".format(results[counter].get_text(), i, len(results))) 
                     counter = counter + 5
                 except IndexError:
+                    print("Reached end of board members")
                     continue
 
     def openCSVFile(self):
@@ -166,7 +173,7 @@ class Scraper():
         # main loop - lazy code
         self.itemiseList()
         self.openCSVFile()
-        for i in range(15, len(self.ASXCodes)):
+        for i in range(0, len(self.ASXCodes)):
             print("Searching {0}: {1} out of {2}".format(self.ASXCodes[i], i, len(self.ASXCodes)))
             self.returnSearchASX(self.ASXCodes[i])
 
