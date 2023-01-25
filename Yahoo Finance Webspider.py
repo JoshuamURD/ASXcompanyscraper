@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
+import os
+import datetime
 
 
 class Scraper():
@@ -156,6 +158,14 @@ class Scraper():
         with open('Board Directors.csv', 'w+') as fd:
             fd.write("Company Name, ASX Code, Board director Name, Board Director Title, pay, exercised, year born, gender, Sector, Industry, Company Decsription, Adresss, Postcode")
 
+    def uniqueName(self, file, ext='.txt'):
+        # provide a unique name date and time stamped
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        transformed = os.path.splitext(file)[0]
+        filename = f"{str(transformed)}.{timestamp}.{ext}"
+        # split file ext of current file
+        os.renames(file, filename)
+
     def itemiseList(self):
         # Creates a list for the ASX codes
         print(self.listdir)
@@ -166,6 +176,7 @@ class Scraper():
         # main loop - lazy code
         self.itemiseList()
         self.openCSVFile()
+        self.uniqueName('Board Directors.csv', 'csv')
         for i in range(15, len(self.ASXCodes)):
             print("Searching {0}: {1} out of {2}".format(self.ASXCodes[i], i, len(self.ASXCodes)))
             self.returnSearchASX(self.ASXCodes[i])
