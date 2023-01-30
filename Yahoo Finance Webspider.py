@@ -72,26 +72,11 @@ class Scraper():
         # Finds and returns the company's address.
         # Required a different method than findASXValue function
         print("Finding {0}'s address".format(ASX))
-        results = self.requestPage(ASX, 'p')
-        ausindex = results[1].get_text().find("Australia")
+        company_address_extract = self.requestPage(ASX, 'p', "D(ib) W(47.727%) Pend(40px)")
+        company_address_list = [text for text in company_address_extract.stripped_strings]
 
-        #Checks to see if foudn "Australia" in ausindex
-        if ausindex == -1:
-            print("Not located in Australia")
-            return "N/A"
-
-        try:
-            formattedResults = results[1].get_text()
-        except IndexError:
-            print("Couldn't find address data for: {}".format(ASX))
-            return
-
-        if len(formattedResults) == 9:
-            print("only know that {} is in Australia".format(ASX))
-            return formattedResults[:ausindex]
-
-        # if the function found a correct Australian address, returns the address
-        return formattedResults[:ausindex]
+        print(f'Found address for {ASX}: {company_address_list}')
+        return company_address_list
 
     def findCompanyDesc(self, ASX):
         # find company description
