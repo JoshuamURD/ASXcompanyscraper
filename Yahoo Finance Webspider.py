@@ -36,15 +36,19 @@ class Scraper():
             # Returns N/A if couldn't convert for some reason
             return "N/A"
 
-    def requestPage(self, ASX, HTMLtag):
-        # function to return a page request targeting a specific HTML tag
+    def requestPage(self, ASX, HTMLtag, HTML_class=False):
+        # function to return a page request targeting a specific HTML tag. Can specify a class for specific result
         # Uses the Yahoo Finance website request with a given ASX code
         URL = self.formatWebsite(ASX)
-        page = requests.get(URL, headers=self.headers).text
-        soup = BeautifulSoup(page, 'lxml')
-        results = soup.findAll(HTMLtag)
-        # returns the result of the targeted HTML tag Beautiful soup'd
-        return results
+        page = requests.get(URL, headers=self.headers)
+        soup = BeautifulSoup(page.content, 'lxml')
+        #If a HTML class is specified, will use the find() function instead and return specific result, otherwise uses findAll
+        if HTML_class:
+            results = soup.find(HTMLtag, class_=HTML_class)
+            return results
+        else:
+            results = soup.findAll(HTMLtag)
+            return results
 
     def gender(self, name):
         # Detects the title of a director and returns their gender
