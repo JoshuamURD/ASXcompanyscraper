@@ -14,11 +14,10 @@ class Scraper():
         # headers for HTML request that emulate a browser
         self.headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}
 
-    def formatWebsite(self, asxcode):
+    def formatWebsite(self, asx_code):
         # Formats the URL to return the profile \
         # of a company's Yahoo Finance pageformatted
-        formatted = 'https://au.finance.yahoo.com/quote/' +\
-                asxcode + '.AX/profile?p=' + asxcode + ".AX"
+        formatted = f"https://finance.yahoo.com/quote/{asx_code}.AX/profile?p={asx_code}.AX"
         return str(formatted)
 
     def formattingCommas(self, text):
