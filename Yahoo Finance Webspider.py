@@ -98,7 +98,7 @@ class Scraper():
         # test to see if ASX code is available
         if not any(word in results[counter].get_text() for word in self.titles):
             print("Checking if {0} is in {1}".format(results[counter].get_text(), self.titles))
-            print("Tried to pull data for {0}, instead got:\n".format(ASX))
+            print("Tried to pull data for {0}, instead got:\n".format(ASX).grabError())
             print(results[counter].get_text())
             return False
         return
@@ -165,6 +165,13 @@ class Scraper():
         filename = f"{str(transformed)}.{timestamp}.{ext}"
         # split file ext of current file
         os.renames(file, filename)
+
+    def grabError(self, err):
+        error_list = []
+        for errors in err:
+            error_list.append(errors)
+        return error_list
+        print(error_list)
 
     def itemiseList(self):
         # Creates a list for the ASX codes
