@@ -102,6 +102,7 @@ class Scraper():
         # Gets ASX director's and puts them in the CSV
         # Focuses on table containing board director information
         results = self.requestPage(ASX, 'td')
+        board_mem_num = int(len(results)/5)
         counter = 0 #counter for the 'td' table results. Each row has 5 columns
 
         #if no 'td' tags on page, means company doesn't have Yahoo Finance page
@@ -109,7 +110,7 @@ class Scraper():
             return
 
 
-        for i in range(len(results)):
+        for i in range(board_mem_num):
             col = 0 #counter for column
 
             #Currently the index error is how end of 'td' table is detected
@@ -135,15 +136,14 @@ class Scraper():
                 for c in row_of_data:
                     self.worksheet.write(self.row, col, c)
                     col+=1
-                    print(f"{c} \nbeing written to column: {col}")
-                for i in company_address:
-                    self.worksheet.write(self.row, col, i)
+                for a in company_address:
+                    self.worksheet.write(self.row, col, a)
                     col+=1
                 self.row+=1
-                print("Board member {0} is being written.\n{1} out of {2}".format(results[counter].get_text(), i, len(results))) 
+                print(f"Board member {board_dir_name} is being written.\n{i+1} out of {board_mem_num} board members")
                 counter = counter + 5
             except IndexError:
-                print("Reached end of board members")
+                print("An unknown index error occurred!!)
                 continue
     
     def create_worksheet_headings(self):
@@ -168,7 +168,7 @@ class Scraper():
         self.create_worksheet_headings()
 
         #for i in range(0, len(self.ASXCodes)):
-        for i in range(0, 1):
+        for i in range(0, 2):
             print("Searching {0}: {1} out of {2}".format(self.ASXCodes[i], i, len(self.ASXCodes)))
             self.write_to_excel(self.ASXCodes[i])
         self.workbook.close()
@@ -177,4 +177,4 @@ class Scraper():
 
 s = Scraper('List of ASX codes.txt')
 s.mainloop()
-print("Done")
+print("Program finished successfully")
