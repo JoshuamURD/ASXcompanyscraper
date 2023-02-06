@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
+import xlsxwriter
 
 
 class Scraper():
@@ -13,28 +14,19 @@ class Scraper():
         self.titles = ["Sir", "Dr.", "Mr.", "Ms."]
         # headers for HTML request that emulate a browser
         self.headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}
+        #Counts the rows of the current worksheet
+        self.row= 1
+        #name of the excel spreadsheet
+        self.workbook = xlsxwriter.Workbook('Board directors.xlsx')
+
+    def createWorksheet(self):
+        self.worksheet = self.workbook.add_worksheet()
 
     def formatWebsite(self, asx_code):
         # Formats the URL to return the profile \
         # of a company's Yahoo Finance pageformatted
         formatted = f"https://finance.yahoo.com/quote/{asx_code}.AX/profile?p={asx_code}.AX"
         return str(formatted)
-
-    def formattingCommas(self, text):
-        # Gets rid of commas so CSV works, consider switching to xlsx
-        try:
-            # Lazy error exception that just tells me where the program failed
-            # if there is a comma in the text replaces with a dash
-            if ',' in text:
-                formatted = text.replace(',', ' - ')
-                return formatted
-            else:
-                # print('No formatting required')
-                return text
-        except TypeError:
-            print("Couldn't convert {}".format(text))
-            # Returns N/A if couldn't convert for some reason
-            return "N/A"
 
     def requestPage(self, ASX, HTMLtag, HTML_class=False):
         # function to return a page request targeting a specific HTML tag. Can specify a class for specific result
@@ -52,6 +44,7 @@ class Scraper():
 
     def gender(self, name):
         # Detects the title of a director and returns their gender
+        gender = str()
         if "Mr." or "Sir" in name:
             return "Male"
         elif "Ms." or "Mrs." in name:
@@ -81,8 +74,8 @@ class Scraper():
     def findCompanyDesc(self, ASX):
         # find company description
         results = self.requestPage(ASX, 'p')
-        formatted = self.formattingCommas(results[3].get_text())
-        return formatted
+        description = results[3].get_text()
+        return description
 
     # Function for writing which ASX codes had an error scraping
     def writeErrors(self, ASX):
@@ -105,51 +98,62 @@ class Scraper():
             return False
         return True
 
-    def returnSearchASX(self, ASX):
+    def write_to_excel(self, ASX):
         # Gets ASX director's and puts them in the CSV
-        # NOTE: consider seperating the consolidating of information
-        # and putting it into CSV file.FileExistsError
-        counter = 0
-        # creates a result page to check
+        # Focuses on table containing board director information
         results = self.requestPage(ASX, 'td')
+        counter = 0 #counter for the 'td' table results. Each row has 5 columns
 
+        #if no 'td' tags on page, means company doesn't have Yahoo Finance page
         if not self.hasASXpage(results, counter, ASX):
             return
 
-        companyName = self.requestPage(ASX, 'h1')[0].get_text()
-        sector = self.findASXValue(ASX, "Sector(s)")
-        industry = self.findASXValue(ASX, "Industry")
 
-        with open('Board Directors.csv', 'a', encoding="utf-8") as fd:
-            fd.write("\n")
-            for i in range(len(results)):
-               
-                try:
-                    fd.write(
-                            "{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}\n".format(
-                                companyName,
-                                ASX,
-                                self.formattingCommas(results[counter].get_text()),
-                                self.formattingCommas(results[counter+1].get_text()),
-                                self.formattingCommas(results[counter+2].get_text()),
-                                self.formattingCommas(results[counter+3].get_text()),
-                                self.formattingCommas(results[counter+4].get_text()),
-                                self.gender(results[counter].get_text()),
-                                self.formattingCommas(sector),
-                                self.formattingCommas(industry),
-                                self.findCompanyDesc(ASX),
-                                self.findCompanyAddress(ASX)
-                                ))
-                    print("Board member {0} is being written.\n{1} out of {2}".format(results[counter].get_text(), i, len(results))) 
-                    counter = counter + 5
-                except IndexError:
-                    print("Reached end of board members")
-                    continue
+        for i in range(len(results)):
+            col = 0 #counter for column
 
-    def openCSVFile(self):
-        # creates CV file that stores director's of companies
-        with open('Board Directors.csv', 'w+') as fd:
-            fd.write("Company Name, ASX Code, Board director Name, Board Director Title, pay, exercised, year born, gender, Sector, Industry, Company Decsription, Adresss, Postcode")
+            #Currently the index error is how end of 'td' table is detected
+            try:
+                #All data for one row of spreadsheet
+                company_name = self.requestPage(ASX, 'h1')[0].get_text()
+                board_dir_name = results[counter].get_text()
+                board_dir_title = results[counter+1].get_text()
+                board_dir_pay = results[counter+2].get_text()
+                board_dir_exercised = results[counter+3].get_text()
+                board_dir_DOB = results[counter+4].get_text()
+                board_dir_gender = self.gender(results[counter].get_text())
+                company_sector = self.findASXValue(ASX, "Sector(s)")
+                company_industry = self.findASXValue(ASX, "Industry")
+                company_desc = self.findCompanyDesc(ASX)
+                company_address = self.findCompanyAddress(ASX)
+                
+                #Puts the above in a list
+                row_of_data = [company_name, ASX, board_dir_name, board_dir_title, board_dir_pay,
+                board_dir_exercised, board_dir_DOB, board_dir_gender, company_sector, company_industry, company_desc]
+
+
+                for c in row_of_data:
+                    self.worksheet.write(self.row, col, c)
+                    col+=1
+                    print(f"{c} \nbeing written to column: {col}")
+                for i in company_address:
+                    self.worksheet.write(self.row, col, i)
+                    col+=1
+                self.row+=1
+                print("Board member {0} is being written.\n{1} out of {2}".format(results[counter].get_text(), i, len(results))) 
+                counter = counter + 5
+            except IndexError:
+                print("Reached end of board members")
+                continue
+    
+    def create_worksheet_headings(self):
+        col = 0
+        format = self.workbook.add_format({'bold': True, 'font_size': 14})
+        headings = ["Company Name", "ASX Code", "Board director Name", "Board Director Title", "pay", "exercised", 
+        "year born", "gender", "Sector", "Industry", "Company Description", "Adresss", "Postcode"]
+        for heading in headings:
+            self.worksheet.write(0, col, heading, format)
+            col+=1
 
     def itemiseList(self):
         # Creates a list for the ASX codes
@@ -160,10 +164,15 @@ class Scraper():
     def mainloop(self):
         # main loop - lazy code
         self.itemiseList()
-        self.openCSVFile()
-        for i in range(0, len(self.ASXCodes)):
+        self.createWorksheet()
+        self.create_worksheet_headings()
+
+        #for i in range(0, len(self.ASXCodes)):
+        for i in range(0, 1):
             print("Searching {0}: {1} out of {2}".format(self.ASXCodes[i], i, len(self.ASXCodes)))
-            self.returnSearchASX(self.ASXCodes[i])
+            self.write_to_excel(self.ASXCodes[i])
+        self.workbook.close()
+
 
 
 s = Scraper('List of ASX codes.txt')
